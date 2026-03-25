@@ -9,9 +9,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and name are required' }, { status: 400 });
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // More lenient email validation - just check basic format
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    if (!trimmedEmail.includes('@') || trimmedEmail.length < 3) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
     }
 
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
     const { data: existingUser } = await supabase
       .from('users')
       .select('id, name')
-      .eq('email', email)
+      .eq('email', trimmedEmail)
       .single();
 
     if (existingUser) {
@@ -38,14 +39,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         userId,
         name,
-        email,
+        email: trimmedEmail,
         isReturningUser: true
       });
     } else {
       // Create new user
       const { data: newUser, error: createError } = await supabase
         .from('users')
-        .insert({ email, name })
+        .insert({ email: trimmedEmail, name })
         .select()
         .single();
 

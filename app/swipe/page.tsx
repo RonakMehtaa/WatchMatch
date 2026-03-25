@@ -1,444 +1,252 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import SwipeCard, { SwipeButtons } from '@/components/SwipeCard';
+import SwipeCard from '@/components/SwipeCard';
+import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { LogOut, SlidersHorizontal, X } from 'lucide-react';
-import { PROVIDER_IDS, GENRE_IDS } from '@/lib/tmdb';
+import { X, Heart, Sparkles } from 'lucide-react';
+import Image from 'next/image';
 
-interface ContentItem {
+interface Content {
   id: number;
   title: string;
   overview: string;
   poster_path: string;
-  rating: number;
-  content_type: 'movie' | 'tv';
-  popularity: number;
+  vote_average: number;
+  release_date?: string;
+  first_air_date?: string;
+  media_type: string;
+}
+
+interface Match {
+  content_id: number;
+  title: string;
+  poster_path: string;
+  matched_with: string;
 }
 
 export default function SwipePage() {
   const router = useRouter();
-  const [content, setContent] = useState<ContentItem[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [content, setContent] = useState<Content[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
-  const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [matchModal, setMatchModal] = useState<Match | null>(null);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem('userId');
-    const storedUserName = localStorage.getItem('userName');
-
-    if (!storedUserId) {
+    const userData = localStorage.getItem('user');
+    if (!userData || userData === 'undefined') {
       router.push('/');
       return;
     }
 
-    setUserId(storedUserId);
-    setUserName(storedUserName);
+    try {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      loadContent();
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      localStorage.removeItem('user');
+      router.push('/');
+    }
   }, [router]);
 
-  const fetchContent = useCallback(async () => {
+  const loadContent = async () => {
     try {
-      if (!userId) return;
-
-      setLoading(true);
-
-      const swipeResponse = await fetch(`/api/user-swipes?userId=${userId}`);
-      const { data: seenContent } = await swipeResponse.json();
-      const seenIds = new Set(seenContent?.map((s: any) => s.content_id) || []);
-
-      console.log('Seen content IDs:', Array.from(seenIds));
-
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '200',
-      });
-
-      if (selectedProviders.length > 0) {
-        params.append('providers', selectedProviders.join(','));
-      }
-
-      if (selectedGenres.length > 0) {
-        params.append('genres', selectedGenres.join(','));
-      }
-
-      const response = await fetch(`/api/content?${params.toString()}`);
-      const { content: fetchedContent } = await response.json();
-
-      console.log('Total fetched:', fetchedContent.length);
-
-      const unseenContent = fetchedContent.filter((item: ContentItem) => !seenIds.has(item.id));
-
-      console.log('Unseen content:', unseenContent.length);
-
-      setContent(unseenContent);
-      setCurrentIndex(0);
+      const response = await fetch('/api/content');
+      const data = await response.json();
+      setContent(data.content || []);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching content:', error);
+      console.error('Error loading content:', error);
       setLoading(false);
     }
-  }, [userId, page, selectedProviders, selectedGenres]);
+  };
 
-  useEffect(() => {
-    if (userId) {
-      fetchContent();
-    }
-  }, [userId, fetchContent]);
+  const handleSwipe = async (direction: 'left' | 'right') => {
+    if (!user || currentIndex >= content.length) return;
 
-  const preloadNextCards = useCallback(() => {
-    for (let i = currentIndex + 1; i < Math.min(currentIndex + 6, content.length); i++) {
-      if (content[i]?.poster_path) {
-        const img = new Image();
-        img.src = `https://image.tmdb.org/t/p/original${content[i].poster_path}`;
-      }
-    }
-  }, [currentIndex, content]);
-
-  useEffect(() => {
-    preloadNextCards();
-  }, [preloadNextCards]);
-
-  const handleSwipe = async (liked: boolean) => {
-    if (!userId || !content[currentIndex]) return;
+    const currentContent = content[currentIndex];
+    const liked = direction === 'right';
 
     try {
-      await fetch('/api/swipe', {
+      const response = await fetch('/api/swipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
-          contentId: content[currentIndex].id,
+          user_id: user.id,
+          content_id: currentContent.id,
           liked,
         }),
       });
 
-      setCurrentIndex(prev => prev + 1);
+      const data = await response.json();
+
+      if (data.match) {
+        setMatchModal({
+          content_id: currentContent.id,
+          title: currentContent.title,
+          poster_path: currentContent.poster_path,
+          matched_with: data.matched_with,
+        });
+      }
+
+      setCurrentIndex(currentIndex + 1);
     } catch (error) {
-      console.error('Error saving swipe:', error);
+      console.error('Error swiping:', error);
     }
   };
 
-  const handleViewMatches = () => {
-    router.push('/compare');
-  };
-
-  const handleLeaveRoom = () => {
-    localStorage.clear();
-    router.push('/');
-  };
-
-  const handleApplyFilters = () => {
-    setContent([]);
-    setCurrentIndex(0);
-    setPage(1);
-    fetchContent();
-    setShowFilters(false);
-  };
-
-  const toggleProvider = (providerId: number) => {
-    setSelectedProviders(prev =>
-      prev.includes(providerId)
-        ? prev.filter(id => id !== providerId)
-        : [...prev, providerId]
-    );
-  };
-
-  const toggleGenre = (genreId: number) => {
-    setSelectedGenres(prev =>
-      prev.includes(genreId)
-        ? prev.filter(id => id !== genreId)
-        : [...prev, genreId]
-    );
-  };
-
-  const clearFilters = () => {
-    setSelectedProviders([]);
-    setSelectedGenres([]);
-  };
+  const currentContent = content[currentIndex];
+  const hasMore = currentIndex < content.length;
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0B0B0F' }}>
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (currentIndex >= content.length) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: '#0B0B0F' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-md"
-        >
-          <div className="text-7xl mb-6">🎉</div>
-          <h2 className="text-3xl font-bold text-white mb-4">You're done for now</h2>
-          <p className="text-lg mb-8" style={{ color: '#A1A1AA' }}>
-            {selectedProviders.length > 0 || selectedGenres.length > 0
-              ? 'Try changing your filters to see more content.'
-              : 'Check back later for fresh picks.'}
-          </p>
-          <div className="flex flex-col gap-3">
-            {(selectedProviders.length > 0 || selectedGenres.length > 0) && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowFilters(true)}
-                className="px-8 py-4 rounded-xl font-bold text-white transition-all"
-                style={{ backgroundColor: '#E50914' }}
-              >
-                Adjust Filters
-              </motion.button>
-            )}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleViewMatches}
-              className="px-8 py-4 rounded-xl font-medium text-white transition-all"
-              style={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}
-            >
-              Compare with Friend
-            </motion.button>
-          </div>
-        </motion.div>
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0B0B0F' }}>
-      {/* Minimal Header */}
-      <header className="flex items-center justify-between px-6 py-4"
-              style={{ 
-                backgroundColor: 'rgba(20, 21, 26, 0.8)',
-                backdropFilter: 'blur(20px)',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-              }}>
-        <div>
-          <p className="text-sm font-medium" style={{ color: '#A1A1AA' }}>
-            Hey, {userName}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowFilters(true)}
-            className="p-2.5 rounded-xl transition-all relative"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Header - Minimal */}
+      <div className="absolute top-0 left-0 right-0 z-10 p-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <p className="text-sm text-[#A1A1AA]">
+              {user?.name}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/matches')}
           >
-            <SlidersHorizontal className="w-5 h-5 text-white" />
-            {(selectedProviders.length > 0 || selectedGenres.length > 0) && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: '#E50914' }} />
-            )}
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleLeaveRoom}
-            className="p-2.5 rounded-xl transition-all"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-          >
-            <LogOut className="w-5 h-5 text-white" />
-          </motion.button>
+            View Matches
+          </Button>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        {/* Card Stack */}
-        <div className="relative w-full max-w-sm aspect-[2/3] mb-6">
-          <AnimatePresence>
-            {content.slice(currentIndex, currentIndex + 3).map((item, index) => (
-              <SwipeCard
-                key={item.id}
-                content={item}
-                onSwipe={handleSwipe}
-                isTop={index === 0}
-                style={{
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  zIndex: 3 - index,
-                  scale: 1 - index * 0.03,
-                  y: index * 8,
-                }}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-
-        {/* Swipe Buttons */}
-        <SwipeButtons
-          onLike={() => handleSwipe(true)}
-          onDislike={() => handleSwipe(false)}
-        />
-
-        {/* Progress */}
-        <div className="mt-6 text-center">
-          <p className="text-sm font-medium" style={{ color: '#A1A1AA' }}>
-            {currentIndex + 1} of {content.length}
-          </p>
-          {(selectedProviders.length > 0 || selectedGenres.length > 0) && (
-            <p className="text-xs mt-1" style={{ color: '#E50914' }}>
-              {selectedProviders.length + selectedGenres.length} filters active
+      <div className="flex-1 flex items-center justify-center w-full px-6 py-20">
+        {hasMore ? (
+          <div className="relative w-full max-w-[420px] h-[600px]">
+            <AnimatePresence>
+              {content.slice(currentIndex, currentIndex + 3).map((item, index) => (
+                <SwipeCard
+                  key={item.id}
+                  content={item}
+                  onSwipe={index === 0 ? handleSwipe : () => {}}
+                  style={{
+                    zIndex: 3 - index,
+                    scale: 1 - index * 0.05,
+                    y: index * 10,
+                  }}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center max-w-md"
+          >
+            <div className="w-24 h-24 bg-[#18181B] rounded-full flex items-center justify-center mx-auto mb-8">
+              <Sparkles className="w-12 h-12 text-[#F5C518]" />
+            </div>
+            <h2 className="text-4xl font-bold mb-4">All done!</h2>
+            <p className="text-[#A1A1AA] mb-10 text-lg leading-relaxed">
+              You've swiped through all available content.
             </p>
-          )}
-        </div>
-      </div>
-
-      {/* Footer Button */}
-      <div className="p-6" style={{ backgroundColor: 'rgba(20, 21, 26, 0.8)' }}>
-        <button
-          onClick={handleViewMatches}
-          className="w-full py-4 rounded-xl font-bold text-white transition-all duration-200"
-          style={{ backgroundColor: '#E50914' }}
-        >
-          Compare with Friend
-        </button>
-      </div>
-
-      {/* Filter Panel */}
-      <AnimatePresence>
-        {showFilters && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowFilters(false)}
-              className="fixed inset-0 z-40"
-              style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(4px)' }}
-            />
-
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 w-full max-w-md z-50 overflow-y-auto"
-              style={{ backgroundColor: '#14151A' }}
-            >
-              {/* Filter Header */}
-              <div className="sticky top-0 p-6 flex items-center justify-between"
-                   style={{ 
-                     backgroundColor: 'rgba(20, 21, 26, 0.95)',
-                     backdropFilter: 'blur(20px)',
-                     borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-                   }}>
-                <h2 className="text-2xl font-bold text-white">Filters</h2>
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="p-2 rounded-xl transition-all"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-8">
-                {/* Streaming Services */}
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-4">Streaming Services</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {Object.entries(PROVIDER_IDS).map(([name, id]) => (
-                      <button
-                        key={id}
-                        onClick={() => toggleProvider(id)}
-                        className="p-4 rounded-xl font-medium text-sm transition-all"
-                        style={selectedProviders.includes(id) 
-                          ? { 
-                              backgroundColor: 'rgba(229, 9, 20, 0.2)',
-                              border: '2px solid #E50914',
-                              color: 'white'
-                            }
-                          : { 
-                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                              border: '2px solid rgba(255, 255, 255, 0.1)',
-                              color: '#A1A1AA'
-                            }
-                        }
-                      >
-                        {name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Genres */}
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-4">Genres</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(GENRE_IDS).map(([name, id]) => (
-                      <button
-                        key={id}
-                        onClick={() => toggleGenre(id)}
-                        className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                        style={selectedGenres.includes(id)
-                          ? { 
-                              backgroundColor: 'rgba(229, 9, 20, 0.2)',
-                              border: '1px solid #E50914',
-                              color: 'white'
-                            }
-                          : { 
-                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              color: '#A1A1AA'
-                            }
-                        }
-                      >
-                        {name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Filter Footer */}
-              <div className="sticky bottom-0 p-6 space-y-3"
-                   style={{ 
-                     backgroundColor: 'rgba(20, 21, 26, 0.95)',
-                     backdropFilter: 'blur(20px)',
-                     borderTop: '1px solid rgba(255, 255, 255, 0.08)'
-                   }}>
-                <button
-                  onClick={handleApplyFilters}
-                  className="w-full py-4 rounded-xl font-bold text-white transition-all"
-                  style={{ backgroundColor: '#E50914' }}
-                >
-                  Apply Filters
-                </button>
-                {(selectedProviders.length > 0 || selectedGenres.length > 0) && (
-                  <button
-                    onClick={clearFilters}
-                    className="w-full py-4 rounded-xl font-medium text-white transition-all"
-                    style={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)'
-                    }}
-                  >
-                    Clear All
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          </>
+            <Button onClick={() => router.push('/matches')} size="lg">
+              View Your Matches
+            </Button>
+          </motion.div>
         )}
-      </AnimatePresence>
+      </div>
+
+      {/* Action Buttons - Fixed Bottom */}
+      {hasMore && (
+        <div className="absolute bottom-0 left-0 right-0 pb-10 flex items-center justify-center gap-6 z-10">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => handleSwipe('left')}
+            className="w-16 h-16 bg-[#18181B]/80 backdrop-blur-sm border border-[#27272A] hover:border-red-500/50 hover:bg-red-500/10 rounded-full flex items-center justify-center transition-all shadow-lg"
+          >
+            <X className="w-7 h-7 text-red-500" strokeWidth={2.5} />
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => handleSwipe('right')}
+            className="w-16 h-16 bg-[#18181B]/80 backdrop-blur-sm border border-[#27272A] hover:border-green-500/50 hover:bg-green-500/10 rounded-full flex items-center justify-center transition-all shadow-lg"
+          >
+            <Heart className="w-7 h-7 text-green-500" strokeWidth={2.5} />
+          </motion.button>
+        </div>
+      )}
+
+      {/* Match Modal */}
+      <Modal
+        isOpen={!!matchModal}
+        onClose={() => setMatchModal(null)}
+        size="sm"
+      >
+        {matchModal && (
+          <div className="p-8 text-center">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', duration: 0.6, bounce: 0.5 }}
+              className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
+            >
+              <Sparkles className="w-12 h-12 text-white" />
+            </motion.div>
+
+            <h2 className="text-4xl font-bold mb-3">It's a Match!</h2>
+            <p className="text-[#A1A1AA] mb-10 text-lg">
+              You and <span className="text-white font-semibold">{matchModal.matched_with}</span> both liked this
+            </p>
+
+            <div className="relative w-48 aspect-[2/3] mx-auto mb-8 rounded-xl overflow-hidden shadow-2xl">
+              <Image
+                src={`https://image.tmdb.org/t/p/w500${matchModal.poster_path}`}
+                alt={matchModal.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+
+            <h3 className="text-2xl font-bold mb-10">{matchModal.title}</h3>
+
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setMatchModal(null)}
+              >
+                Keep Swiping
+              </Button>
+              <Button
+                fullWidth
+                onClick={() => {
+                  setMatchModal(null);
+                  router.push('/matches');
+                }}
+              >
+                View All Matches
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

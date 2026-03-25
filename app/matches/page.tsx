@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import MatchesGrid from '@/components/MatchesGrid';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import Container from '@/components/ui/Container';
+import { ArrowLeft } from 'lucide-react';
 
 interface ContentItem {
   id: number;
@@ -51,76 +53,45 @@ export default function MatchesPage() {
     fetchMatches(storedUserId, storedRoomId);
   }, [router]);
 
-  const handleRefresh = () => {
-    if (userId && roomId) {
-      fetchMatches(userId, roomId);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+    <div className="min-h-screen">
+      <Container size="full" className="py-12">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12"
+        >
+          <div className="flex items-center gap-6 mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => router.push('/swipe')}
-              className="p-2 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
-            </motion.button>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Your Matches</h1>
-              <p className="text-sm text-gray-400">
-                {matches.length} {matches.length === 1 ? 'match' : 'matches'} found
-              </p>
-            </div>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Swiping
+            </Button>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05, rotate: 180 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleRefresh}
-            className="p-2 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </motion.button>
-        </div>
-      </header>
+          <h1 className="text-5xl md:text-6xl font-bold mb-4">
+            Your Matches
+          </h1>
+          <p className="text-xl text-[#A1A1AA]">
+            {matches.length} {matches.length === 1 ? 'title' : 'titles'} you both liked
+          </p>
+        </motion.div>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
-        {matches.length > 0 && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg">
-            <p className="text-green-400 text-center">
-              🎉 You both liked these! Time to pick one and start watching.
-            </p>
-          </div>
-        )}
-
+        {/* Matches Grid */}
         <MatchesGrid matches={matches} />
-      </main>
-
-      {/* Footer */}
-      {matches.length > 0 && (
-        <div className="p-4 bg-black/50 backdrop-blur-sm border-t border-white/10">
-          <div className="max-w-7xl mx-auto text-center">
-            <p className="text-sm text-gray-400">
-              Tip: Share your room code <span className="font-bold text-white">{roomId}</span> with friends to find more matches!
-            </p>
-          </div>
-        </div>
-      )}
+      </Container>
     </div>
   );
 }

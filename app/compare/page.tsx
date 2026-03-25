@@ -79,20 +79,25 @@ export default function ComparePage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0B0B0F' }}>
-      {/* Minimal Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-30 px-6 py-4"
-              style={{ 
-                backgroundColor: 'rgba(20, 21, 26, 0.8)',
-                backdropFilter: 'blur(20px)',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-              }}>
-        <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <header 
+        className="px-4 sm:px-6 py-5"
+        style={{ 
+          backgroundColor: 'rgba(11, 11, 15, 0.8)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+        }}
+      >
+        <div className="max-w-4xl mx-auto">
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => router.push('/')}
-            className="p-2.5 rounded-xl transition-all"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            className="p-3 rounded-full transition-all"
+            style={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </motion.button>
@@ -100,51 +105,58 @@ export default function ComparePage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-6" style={{ paddingTop: '80px', paddingBottom: '60px' }}>
+      <main className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
         {!searched ? (
-          // Search Form - Centered
+          // Search Form
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-2xl"
+            transition={{ duration: 0.6 }}
+            className="w-full max-w-md mx-auto"
           >
-            {/* Heading */}
+            {/* Hero */}
             <div className="text-center mb-12">
               <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-                className="mb-6"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="mb-8"
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" 
-                     style={{ backgroundColor: '#E50914' }}>
-                  <Users className="w-8 h-8 text-white" />
+                <div 
+                  className="inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6"
+                  style={{ 
+                    backgroundColor: '#E50914',
+                    boxShadow: '0 20px 40px rgba(229, 9, 20, 0.3)'
+                  }}
+                >
+                  <Users className="w-10 h-10 text-white" />
                 </div>
               </motion.div>
               
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 leading-tight">
-                Compare with a Friend
+              <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight tracking-tight text-white">
+                Compare with<br />a Friend
               </h1>
-              <p className="text-lg" style={{ color: '#A1A1AA' }}>
-                Enter two email addresses to see what you both liked
+              
+              <p className="text-base sm:text-lg" style={{ color: '#A1A1AA' }}>
+                Enter two email addresses to see<br />what you both liked
               </p>
             </div>
 
-            {/* Input Card */}
+            {/* Form Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="rounded-2xl p-8 shadow-2xl"
+              transition={{ delay: 0.4 }}
+              className="rounded-3xl p-6 sm:p-8"
               style={{ 
                 backgroundColor: '#14151A',
-                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
               }}
             >
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {/* Email 1 */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-sm font-medium mb-3 text-white">
                     First Person
                   </label>
                   <input
@@ -152,23 +164,38 @@ export default function ComparePage() {
                     value={email1}
                     onChange={(e) => setEmail1(e.target.value)}
                     placeholder="person1@example.com"
-                    className="w-full px-5 py-4 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all duration-200"
+                    className="w-full px-6 py-4 rounded-2xl text-base font-medium transition-all duration-200 focus:outline-none"
                     style={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      border: '2px solid transparent',
+                      color: '#FFFFFF'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#E50914'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                    onFocus={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                      e.target.style.borderColor = '#E50914';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(229, 9, 20, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
+                      e.target.style.borderColor = 'transparent';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
                 </div>
 
-                {/* Divider with "vs" */}
-                <div className="relative py-2">
+                {/* VS Divider */}
+                <div className="relative py-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}></div>
+                    <div className="w-full border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="px-4 text-sm font-bold" style={{ backgroundColor: '#14151A', color: '#E50914' }}>
+                    <span 
+                      className="px-4 text-sm font-bold"
+                      style={{ 
+                        backgroundColor: '#14151A',
+                        color: '#E50914'
+                      }}
+                    >
                       vs
                     </span>
                   </div>
@@ -176,7 +203,7 @@ export default function ComparePage() {
 
                 {/* Email 2 */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-sm font-medium mb-3 text-white">
                     Second Person
                   </label>
                   <input
@@ -184,23 +211,32 @@ export default function ComparePage() {
                     value={email2}
                     onChange={(e) => setEmail2(e.target.value)}
                     placeholder="person2@example.com"
-                    className="w-full px-5 py-4 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all duration-200"
+                    className="w-full px-6 py-4 rounded-2xl text-base font-medium transition-all duration-200 focus:outline-none"
                     style={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      border: '2px solid transparent',
+                      color: '#FFFFFF'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#E50914'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                    onFocus={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                      e.target.style.borderColor = '#E50914';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(229, 9, 20, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
+                      e.target.style.borderColor = 'transparent';
+                      e.target.style.boxShadow = 'none';
+                    }}
                     onKeyPress={(e) => e.key === 'Enter' && handleCompare()}
                   />
                 </div>
 
-                {/* Error Message */}
+                {/* Error */}
                 {error && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="p-4 rounded-xl text-sm"
+                    className="p-4 rounded-2xl text-sm font-medium"
                     style={{ 
                       backgroundColor: 'rgba(229, 9, 20, 0.1)',
                       border: '1px solid rgba(229, 9, 20, 0.3)',
@@ -211,14 +247,28 @@ export default function ComparePage() {
                   </motion.div>
                 )}
 
-                {/* Compare Button */}
+                {/* Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCompare}
                   disabled={loading}
-                  className="w-full py-4 rounded-xl font-bold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{ backgroundColor: '#E50914' }}
+                  className="w-full py-5 rounded-2xl font-bold text-base transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-3"
+                  style={{ 
+                    backgroundColor: '#E50914',
+                    color: '#FFFFFF',
+                    boxShadow: '0 8px 24px rgba(229, 9, 20, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.backgroundColor = '#F40612';
+                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(229, 9, 20, 0.4)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#E50914';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(229, 9, 20, 0.3)';
+                  }}
                 >
                   {loading ? (
                     'Searching...'
@@ -233,89 +283,112 @@ export default function ComparePage() {
             </motion.div>
           </motion.div>
         ) : (
-          // Results View - Centered with max width
-          <div className="w-full max-w-7xl mx-auto">
+          // Results View
+          <div className="w-full max-w-6xl mx-auto">
             {/* Results Header */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
+              className="mb-12"
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8">
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Your Matches</h1>
-                  <p className="text-base" style={{ color: '#A1A1AA' }}>
-                    Movies and shows you both liked
+                  <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">
+                    Your Matches 🎬
+                  </h1>
+                  <p className="text-base sm:text-lg" style={{ color: '#A1A1AA' }}>
+                    Things you both liked
                   </p>
                 </div>
+                
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleReset}
-                  className="p-2.5 rounded-xl transition-all"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                  className="p-3 rounded-full transition-all self-start sm:self-auto"
+                  style={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}
                 >
                   <X className="w-5 h-5 text-white" />
                 </motion.button>
               </div>
 
-              {/* User Comparison Card - Centered */}
-              <div className="max-w-3xl mx-auto">
-                <div className="p-6 rounded-2xl flex items-center justify-center gap-4"
-                     style={{ 
-                       backgroundColor: matches.length > 0 
-                         ? 'rgba(34, 197, 94, 0.1)' 
-                         : 'rgba(161, 161, 170, 0.1)',
-                       border: `1px solid ${matches.length > 0 
-                         ? 'rgba(34, 197, 94, 0.3)' 
-                         : 'rgba(161, 161, 170, 0.2)'}`
-                     }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg"
-                         style={{ backgroundColor: '#E50914' }}>
+              {/* User Comparison */}
+              <div className="max-w-3xl mx-auto mb-8">
+                <div 
+                  className="p-4 sm:p-6 rounded-3xl flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
+                  style={{ 
+                    backgroundColor: matches.length > 0 
+                      ? 'rgba(34, 197, 94, 0.1)' 
+                      : 'rgba(161, 161, 170, 0.1)',
+                    border: `2px solid ${matches.length > 0 
+                      ? 'rgba(34, 197, 94, 0.3)' 
+                      : 'rgba(161, 161, 170, 0.2)'}`,
+                    boxShadow: matches.length > 0
+                      ? '0 20px 60px rgba(34, 197, 94, 0.15)'
+                      : '0 20px 60px rgba(0, 0, 0, 0.3)'
+                  }}
+                >
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div 
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-white text-lg sm:text-xl"
+                      style={{ 
+                        backgroundColor: '#E50914',
+                        boxShadow: '0 8px 24px rgba(229, 9, 20, 0.3)'
+                      }}
+                    >
                       {users[0].name[0].toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-bold text-white">{users[0].name}</p>
-                      <p className="text-xs" style={{ color: '#A1A1AA' }}>{users[0].email}</p>
+                      <p className="font-bold text-white text-base sm:text-lg">{users[0].name}</p>
+                      <p className="text-xs sm:text-sm truncate max-w-[150px]" style={{ color: '#A1A1AA' }}>{users[0].email}</p>
                     </div>
                   </div>
 
-                  <div className="px-6">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-2xl"
-                         style={{ 
-                           backgroundColor: matches.length > 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(161, 161, 170, 0.2)',
-                           color: matches.length > 0 ? '#22c55e' : '#A1A1AA'
-                         }}>
-                      {matches.length > 0 ? '✓' : '×'}
-                    </div>
+                  <div 
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-2xl sm:text-3xl"
+                    style={{ 
+                      backgroundColor: matches.length > 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(161, 161, 170, 0.2)',
+                      color: matches.length > 0 ? '#22c55e' : '#A1A1AA'
+                    }}
+                  >
+                    {matches.length > 0 ? '✓' : '×'}
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg"
-                         style={{ backgroundColor: '#E50914' }}>
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div 
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-white text-lg sm:text-xl"
+                      style={{ 
+                        backgroundColor: '#E50914',
+                        boxShadow: '0 8px 24px rgba(229, 9, 20, 0.3)'
+                      }}
+                    >
                       {users[1].name[0].toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-bold text-white">{users[1].name}</p>
-                      <p className="text-xs" style={{ color: '#A1A1AA' }}>{users[1].email}</p>
+                      <p className="font-bold text-white text-base sm:text-lg">{users[1].name}</p>
+                      <p className="text-xs sm:text-sm truncate max-w-[150px]" style={{ color: '#A1A1AA' }}>{users[1].email}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Match Count */}
-                <div className="text-center mt-4">
-                  <p className="text-lg font-bold" 
-                     style={{ color: matches.length > 0 ? '#22c55e' : '#A1A1AA' }}>
+                <div className="text-center mt-6">
+                  <p 
+                    className="text-xl sm:text-2xl font-bold"
+                    style={{ color: matches.length > 0 ? '#22c55e' : '#A1A1AA' }}
+                  >
                     {matches.length > 0 
                       ? `${matches.length} ${matches.length === 1 ? 'match' : 'matches'} found! 🎉`
-                      : "No matches yet. Keep swiping!"}
+                      : "No matches yet 😅 Keep swiping!"}
                   </p>
                 </div>
               </div>
             </motion.div>
 
-            {/* Loading State */}
+            {/* Loading */}
             {loading && (
               <div className="flex items-center justify-center py-20">
                 <LoadingSpinner />

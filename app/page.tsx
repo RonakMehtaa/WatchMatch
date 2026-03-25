@@ -3,216 +3,142 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Play, Users } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Container from '@/components/ui/Container';
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async () => {
-    if (!email.trim()) {
-      setError('Please enter your email');
-      return;
-    }
-    
-    if (!name.trim()) {
-      setError('Please enter your name');
+  const handleStart = async () => {
+    if (!name.trim() || !email.trim()) {
+      setError('Please enter both name and email');
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
     setError('');
 
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim() }),
       });
 
-      const { userId, error: loginError } = await response.json();
+      const data = await response.json();
 
-      if (loginError) {
-        setError(loginError);
-        setIsLoading(false);
+      if (data.error) {
+        setError(data.error);
+        setLoading(false);
         return;
       }
 
-      localStorage.setItem('userId', userId);
-      localStorage.setItem('userName', name.trim());
-      localStorage.setItem('userEmail', email.trim());
+      // Structure the user object properly
+      const user = {
+        id: data.userId,
+        name: data.name,
+        email: data.email
+      };
 
+      localStorage.setItem('user', JSON.stringify(user));
       router.push('/swipe');
     } catch (err) {
       setError('Something went wrong. Please try again.');
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleCompare = () => {
-    router.push('/compare');
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#0B0B0F' }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        {/* Heading */}
-        <div className="text-center mb-12">
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-            className="mb-6"
-          >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" 
-                 style={{ backgroundColor: '#E50914' }}>
-              <Play className="w-8 h-8 text-white fill-current" />
-            </div>
-          </motion.div>
-          
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 leading-tight">
-            Find something you'll <br />both love
-          </h1>
-          <p className="text-lg" style={{ color: '#A1A1AA' }}>
-            Swipe movies and shows.<br />We'll find your perfect match.
-          </p>
-        </div>
-
-        {/* Card */}
+    <div className="min-h-screen flex items-center justify-center py-12">
+      <Container size="sm">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="rounded-2xl p-8 shadow-2xl"
-          style={{ 
-            backgroundColor: '#14151A',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
-          }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
         >
-          <div className="space-y-5">
-            {/* Email Input */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-5 py-4 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all duration-200"
-                style={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#E50914'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
-              />
-            </div>
+          {/* Hero Section */}
+          <div className="mb-16">
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tight text-balance"
+            >
+              Pick something great together
+            </motion.h1>
             
-            {/* Name Input */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="w-full px-5 py-4 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all duration-200"
-                style={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#E50914'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              />
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-4 rounded-xl text-sm"
-                style={{ 
-                  backgroundColor: 'rgba(229, 9, 20, 0.1)',
-                  border: '1px solid rgba(229, 9, 20, 0.3)',
-                  color: '#E50914'
-                }}
-              >
-                {error}
-              </motion.div>
-            )}
-
-            {/* Primary Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleLogin}
-              disabled={isLoading}
-              className="w-full py-4 rounded-xl font-bold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: '#E50914' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#C40812'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#E50914'}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="text-xl sm:text-2xl text-[#A1A1AA] leading-relaxed text-balance max-w-2xl mx-auto"
             >
-              {isLoading ? 'Loading...' : 'Start Swiping'}
-            </motion.button>
-
-            {/* Divider */}
-            <div className="relative py-3">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}></div>
-              </div>
-              <div className="relative flex justify-center">
-                <span className="px-4 text-sm" style={{ backgroundColor: '#14151A', color: '#A1A1AA' }}>
-                  or
-                </span>
-              </div>
-            </div>
-
-            {/* Secondary Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleCompare}
-              className="w-full py-4 rounded-xl font-medium text-white transition-all duration-200 flex items-center justify-center gap-2"
-              style={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
-            >
-              <Users className="w-5 h-5" />
-              Compare with Friend
-            </motion.button>
+              Swipe through movies and shows.
+              <br />
+              We'll find your overlap.
+            </motion.p>
           </div>
-        </motion.div>
 
-        {/* Footer Info */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 text-center text-sm"
-          style={{ color: '#A1A1AA' }}
-        >
-          <p>Your swipes are saved. Come back anytime.</p>
+          {/* Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="space-y-5"
+          >
+            <Input
+              label="Your name"
+              type="text"
+              placeholder="Enter your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={loading}
+            />
+
+            <Input
+              label="Your email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleStart()}
+              disabled={loading}
+              error={error}
+            />
+
+            <Button
+              onClick={handleStart}
+              disabled={loading}
+              fullWidth
+              size="lg"
+            >
+              {loading ? 'Starting...' : 'Start Swiping'}
+            </Button>
+          </motion.div>
+
+          {/* Footer Link */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="mt-16"
+          >
+            <button
+              onClick={() => router.push('/compare')}
+              className="text-[#A1A1AA] hover:text-[#FAFAFA] transition-colors text-sm font-medium group"
+            >
+              Already have matches? Compare with a friend
+              <span className="inline-block ml-1 transition-transform group-hover:translate-x-1">→</span>
+            </button>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </Container>
     </div>
   );
 }
