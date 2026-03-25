@@ -3,23 +3,5 @@
   "framework": "nextjs",
   "buildCommand": "next build",
   "devCommand": "next dev",
-  "installCommand": "npm install",
-  "env": {
-    "NEXT_PUBLIC_TMDB_API_KEY": {
-      "description": "TMDB API key for accessing movie/TV data",
-      "required": true
-    },
-    "TMDB_API_KEY": {
-      "description": "TMDB API key for server-side requests",
-      "required": true
-    },
-    "NEXT_PUBLIC_SUPABASE_URL": {
-      "description": "Your Supabase project URL",
-      "required": true
-    },
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
-      "description": "Your Supabase anonymous/public key",
-      "required": true
-    }
-  }
+  "installCommand": "npm install"
 }
